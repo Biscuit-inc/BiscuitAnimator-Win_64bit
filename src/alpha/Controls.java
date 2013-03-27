@@ -1,6 +1,5 @@
 package alpha;
 
-import Controllers.Canon;
 import com.googlecode.javacv.FrameGrabber;
 import com.googlecode.javacv.cpp.opencv_core;
 import static com.googlecode.javacv.cpp.opencv_highgui.*;
@@ -36,9 +35,9 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 /**
  *
@@ -48,13 +47,11 @@ public class Controls {
 
     //Variables
     private TextArea scriptfield = new TextArea("", 0, 0, TextArea.SCROLLBARS_VERTICAL_ONLY);
-    private JSlider exp, red, green, blue;
-    long canonbatterylg = camera.getProperty(kEdsPropID_BatteryLevel);
     private static Frame frame = new Frame();
     protected static JPanel window = new JPanel();
     private JPanel script = new JPanel();
     private JPanel audioStudio = new JPanel();
-    protected static JLabel renderCanon, renderWebcam, renderNikon, lexp, lred, lgreen, lblue, timeline;
+    protected static JLabel renderCanon, renderWebcam, renderNikon, timeline;
     private JTabbedPane tabs = new JTabbedPane(JTabbedPane.RIGHT);
     private Font font = new Font("Courier New", Font.PLAIN, 12);
     private JButton cap, record, stopBtn, playaudio, playAnim;
@@ -74,10 +71,9 @@ public class Controls {
     static boolean nikon = true;
     static boolean webcam = true;
 
-    public static void main(String args[]) throws InterruptedException {
+    public static void main(String args[]) throws InterruptedException, UnsupportedLookAndFeelException, ClassNotFoundException, InstantiationException, IllegalAccessException {
         camera.openSession();
         camera.beginLiveView();
-        //Canon.Constants();
         new Controls();
         new Save_as();
 
@@ -167,7 +163,7 @@ public class Controls {
     }
 
     //handles the JFrame and Main Content
-    public Controls() {
+    public Controls() throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
 
         tabs.add("Frame Grabber", window);
         tabs.add("Script Editor", script);
@@ -179,8 +175,6 @@ public class Controls {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
             e.printStackTrace();
         }
         f.setTitle("Pre-Alpha-003-A");
@@ -215,14 +209,14 @@ public class Controls {
         f.repaint();
     }
 
-    private void sound() {
+    private void sound()  throws IOException, LineUnavailableException {
         //Shutter release
         try {
             AudioInputStream shuttersound = AudioSystem.getAudioInputStream(new File("resources/sounds/350d-shutter.wav"));
             Clip shutter = AudioSystem.getClip();
             shutter.open(shuttersound);
             shutter.start();
-        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException uae) {
+        } catch (UnsupportedAudioFileException uae) {
             System.out.println(uae);
         }
     }
@@ -351,21 +345,31 @@ public class Controls {
             public void actionPerformed(ActionEvent actionEvent) {
                 try {
                     if (canon == true) {
-                        sound();
+                        try {
+                            sound();
+                        } catch (IOException ex) {
+                            Logger.getLogger(Controls.class.getName()).log(Level.SEVERE, null, ex);
+                        } catch (LineUnavailableException ex) {
+                            Logger.getLogger(Controls.class.getName()).log(Level.SEVERE, null, ex);
+                        }
                         camera.execute(new ShootTask(filename()));
                         System.out.println("Frame Captured from Canon SLR at... " + Save_as.pathname);
                         framename++;
                     } else if (canon == false) {
                         opencv_core.IplImage img = frame.frame();
-                        sound();
+                        try {
+                            sound();
+                        } catch (IOException ex) {
+                            Logger.getLogger(Controls.class.getName()).log(Level.SEVERE, null, ex);
+                        } catch (LineUnavailableException ex) {
+                            Logger.getLogger(Controls.class.getName()).log(Level.SEVERE, null, ex);
+                        }
                         cvSaveImage(Save_Algorithm.imgdir + "\\image_" + framename + ".tiff", img);
                         System.out.println("Frame Captured from Webcam at... " + Save_as.pathname);
                         framename++;
                     }
                 } catch (RuntimeException e) {
-                    throw e;
-                } catch (Exception e) {
-                    throw e;
+                    throw new RuntimeException(e);
                 }
             }
         });
